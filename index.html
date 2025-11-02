@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Note App — Prototype</title>
+  <style>
+    :root {
+      --bg: #111;
+      --card: #1e1e1e;
+      --accent: #00a86b;
+      --text: #fff;
+      --muted: #aaa;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #000;
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #333;
+    }
+
+    #search {
+      width: 90%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+      outline: none;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .new-note-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+    }
+
+    .note-card {
+      background: var(--card);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    .note-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .note-card p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    #note-editor {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
+    }
+
+    #note-title,
+    #note-content {
+      width: 100%;
+      background: #222;
+      border: none;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #save-btn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #ad-banner {
+      height: 50px;
+      background: #000;
+      border-top: 1px solid #333;
+      text-align: center;
+      line-height: 50px;
+      color: #888;
+      font-size: 14px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .options {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+      flex-direction: column;
+      background: #222;
+      border-radius: 5px;
+    }
+
+    .options button {
+      background: none;
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .note-card.show-options .options {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <input type="text" id="search" placeholder="Search notes..." />
+  </header>
+
+  <main id="note-list">
+    <button class="new-note-btn" id="new-note">+ New Note</button>
+  </main>
+
+  <section id="note-editor">
+    <input type="text" id="note-title" placeholder="Note Title" />
+    <textarea id="note-content" placeholder="Write your note..." rows="10"></textarea>
+    <button id="save-btn">Save Note</button>
+  </section>
+
+  <div id="ad-banner">Ad Banner Area (AdMob)</div>
+
+  <script>
+    const noteList = document.getElementById('note-list');
+    const newNoteBtn = document.getElementById('new-note');
+    const noteEditor = document.getElementById('note-editor');
+    const saveBtn = document.getElementById('save-btn');
+    const titleInput = document.getElementById('note-title');
+    const contentInput = document.getElementById('note-content');
+    const search = document.getElementById('search');
+
+    let notes = JSON.parse(localStorage.getItem('notes')) || [];
+    let editIndex = null;
+
+    function renderNotes() {
+      const query = search.value.toLowerCase();
+      noteList.innerHTML = '<button class="new-note-btn" id="new-note">+ New Note</button>';
+      notes
+        .filter(n => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query))
+        .forEach((note, i) => {
+          const div = document.createElement('div');
+          div.className = 'note-card';
+          div.innerHTML = `
+            <h3>${note.title || 'Untitled'}</h3>
+            <p>${note.content.slice(0, 100)}</p>
+            <div class="options">
+              <button onclick="shareNote(${i})">Share</button>
+              <button onclick="deleteNote(${i})">Delete</button>
+            </div>
+          `;
+          div.addEventListener('click', () => openEditor(i));
+          div.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            div.classList.toggle('show-options');
+          });
+          noteList.appendChild(div);
+        });
+      document.getElementById('new-note').addEventListener('click', () => openEditor());
+    }
+
+    function openEditor(index = null) {
+      editIndex = index;
+      if (index !== null) {
+        titleInput.value = notes[index].title;
+        contentInput.value = notes[index].content;
+      } else {
+        titleInput.value = '';
+        contentInput.value = '';
+      }
+      noteList.style.display = 'none';
+      noteEditor.style.display = 'flex';
+    }
+
+    function saveNote() {
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!title && !content) return;
+
+      const noteData = { title, content, time: Date.now() };
+
+      if (editIndex !== null) {
+        notes[editIndex] = noteData;
+      } else {
+        notes.push(noteData);
+      }
+
+      localStorage.setItem('notes', JSON.stringify(notes));
+      renderNotes();
+      noteEditor.style.display = 'none';
+      noteList.style.display = 'block';
+    }
+
+    function deleteNote(i) {
+      notes.splice(i, 1);
+      localStorage.setItem('notes', JSON.stringify(notes));
+      renderNotes();
+    }
+
+    function shareNote(i) {
+      const text = `${notes[i].title}\n\n${notes[i].content}`;
+      if (navigator.share) {
+        navigator.share({ title: notes[i].title, text });
+      } else {
+        alert("Share not supported on this device.");
+      }
+    }
+
+    saveBtn.addEventListener('click', saveNote);
+    search.addEventListener('input', renderNotes);
+    renderNotes();
+  </script>
+
+</body>
+</html>
