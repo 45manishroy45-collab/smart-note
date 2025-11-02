@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PayEase v3 - Demo with Success Screen</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  html,body{height:100%}
+  body{
+    background:#f3f4f8;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+
+  /* App frame */
+  .app{
+    width:360px;
+    height:720px;
+    background:#ffffff;
+    border-radius:22px;
+    box-shadow:0 18px 40px rgba(17,24,39,0.12);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Top bar */
+  .topbar{
+    background:#ffffff;
+    padding:14px 16px;
+    border-bottom:1px solid #eef0f6;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .title { font-weight:600; font-size:16px; color:#101018; }
+  .iconbtn { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid #f0f1f5; background:#fafafa; }
+  .iconbtn img{width:18px;height:18px;display:block}
+
+  /* content area scroll */
+  .pages { flex:1; overflow:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Banner */
+  .banner{
+    margin:14px 16px;
+    border-radius:12px;
+    background:linear-gradient(90deg,#f6fbff,#fbfdff);
+    padding:14px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    border:1px solid #eef6ff;
+  }
+  .banner .text{flex:1; color:#0f1724; font-size:13px; font-weight:600}
+  .banner img{width:64px;height:64px;opacity:0.95}
+
+  /* Balance card */
+  .balance-card{
+    margin:10px 16px;
+    border-radius:12px;
+    background:linear-gradient(180deg,#ffffff,#fbfbff);
+    padding:12px;
+    border:1px solid #eef0f6;
+  }
+  .bal-row{display:flex;align-items:center;justify-content:space-between}
+  .bal-left{display:flex;flex-direction:column}
+  .bal-label{font-size:12px;color:#64748b}
+  .bal-value{font-size:22px;font-weight:700;color:#0f1724;margin-top:6px}
+  .copy-btn{font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e6e9f2;background:#fff;cursor:pointer}
+
+  /* action grid */
+  .section{margin:12px 16px}
+  .section h3{font-size:14px;color:#101018;margin-bottom:8px;font-weight:600}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .tile{
+    background:#fbfbff;
+    border:1px solid #eef0f6;
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .12s,box-shadow .12s;
+  }
+  .tile:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(15,23,42,0.06);}
+  .tile img{width:28px;height:28px;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto}
+  .tile span{display:block;font-size:12px;color:#0f1724}
+
+  /* quick row */
+  .quick-row{display:flex;gap:8px;margin:12px 16px}
+  .quick{flex:1;padding:10px;border-radius:10px;background:#fbfbff;border:1px solid #eef0f6;text-align:center;cursor:pointer;font-weight:600}
+
+  /* recharge grid smaller tiles */
+  .recharge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+  .recharge-tile{background:#fff;border:1px solid #f0f2f7;border-radius:10px;padding:8px;text-align:center;cursor:pointer}
+  .recharge-tile img{width:22px;height:22px}
+  .recharge-tile span{font-size:11px;color:#101018;display:block;margin-top:6px}
+
+  /* bottom nav */
+  .bottom-nav{
+    height:70px;
+    display:flex;
+    border-top:1px solid #eef0f6;
+    background:#ffffff;
+  }
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;cursor:pointer}
+  .nav-item.active{color:#3b82f6}
+  .nav-item img{width:22px;height:22px;margin-bottom:4px}
+
+  /* modal */
+  .modal-backdrop{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;z-index:90}
+  .modal{width:330px;background:#fff;border-radius:12px;padding:14px;border:1px solid #e9eefb;box-shadow:0 16px 40px rgba(2,6,23,0.3)}
+  .modal h4{font-size:15px;margin-bottom:8px}
+  .field{margin:8px 0}
+  .field label{font-size:12px;color:#334155;display:block;margin-bottom:6px}
+  .field input, .field select {
+    width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9f2;font-size:14px;background:#fbfbff;
+  }
+  .modal .row{display:flex;gap:8px}
+  .btn-row{display:flex;gap:8px;margin-top:12px}
+  .btn{flex:1;padding:10px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+  .btn.primary{background:#3b82f6;color:#fff}
+  .btn.ghost{background:#f1f5f9;color:#0f1724;border:1px solid #e6e9f2}
+
+  /* history list */
+  .history-list{padding:12px 16px}
+  .tx{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed #eef2fb}
+  .tx .meta{font-size:13px;color:#0f1724}
+  .tx .amt{font-weight:700;color:#0f1724}
+
+  /* small helpers */
+  .small{font-size:12px;color:#64748b}
+  .success{color:#059669}
+  .danger{color:#ef4444}
+
+  /* ---------- Success full-screen panel ---------- */
+  .success-screen{
+    position:fixed;
+    z-index:100;
+    left:0;top:0;
+    width:100vw;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(2,6,23,0.45);
+  }
+  .success-panel{
+    width:360px;border-radius:14px;overflow:hidden;background:#ffffff;
+    box-shadow:0 40px 80px rgba(2,6,23,0.4);
+  }
+  .success-head{
+    padding:18px;
+    background:linear-gradient(180deg,#0ea5a4,#059669);
+    color:white;text-align:center;
+  }
+  .success-head .tick{
+    width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.12);display:inline-flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:8px;
+  }
+  .success-body{padding:14px;background:#fff}
+  .success-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f2f6f5}
+  .success-row .label{font-size:12px;color:#64748b}
+  .success-row .value{font-size:14px;color:#0f1724;font-weight:700}
+  .success-note{padding:12px 0;color:#475569;font-size:13px}
+  .success-actions{display:flex;gap:8px;padding:14px;background:#fff}
+  .success-actions .btn{flex:1}
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="PayEase demo app">
+  <div class="topbar">
+    <div class="title" id="pageTitle">Home</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="iconbtn" id="notifBtn" title="Notifications" onclick="openNotifications()">
+        <img src="https://cdn-icons-png.flaticon.com/512/1827/1827392.png" alt="bell">
+      </div>
+      <div class="iconbtn" id="profileBtn" title="Profile" onclick="openProfile()">
+        <img src="https://cdn-icons-png.flaticon.com/512/2910/2910763.png" alt="profile">
+      </div>
+    </div>
+  </div>
+
+  <div class="pages" id="pagesRoot">
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="banner" role="img" aria-label="promo">
+        <div class="text">Start SIPs — grow wealth with small monthly investments</div>
+        <img src="https://cdn-icons-png.flaticon.com/512/3595/3595450.png" alt="promo">
+      </div>
+
+      <div class="balance-card">
+        <div class="bal-row">
+          <div class="bal-left">
+            <div class="bal-label">Wallet Balance</div>
+            <div class="bal-value" id="balanceValue">₹0</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+            <button class="copy-btn" id="copyUpiBtn" title="Copy UPI ID">Copy UPI</button>
+            <button class="copy-btn" id="addMoneyBtn">Add ₹1000</button>
+          </div>
+        </div>
+        <div style="margin-top:10px" class="small">UPI ID: <strong id="upiId">manish@ybl</strong></div>
+      </div>
+
+      <div class="section">
+        <h3>Transfer Money</h3>
+        <div class="grid" aria-hidden="false">
+          <div class="tile" onclick="openTransfer('mobile')">
+            <img src="https://cdn-icons-png.flaticon.com/512/3524/3524659.png" alt="">
+            <span>To Mobile</span>
+          </div>
+          <div class="tile" onclick="openTransfer('bank')">
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" alt="">
+            <span>To Bank/UPI</span>
+          </div>
+          <div class="tile" onclick="openTransfer('self')">
+            <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" alt="">
+            <span>To Self</span>
+          </div>
+          <div class="tile" onclick="openCheckBalance()">
+            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="">
+            <span>Check Balance</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Quick Actions</h3>
+        <div class="quick-row">
+          <div class="quick" onclick="showWallet()">Wallet</div>
+          <div class="quick" onclick="openRewards()">Rewards</div>
+          <div class="quick" onclick="openRefer()">Refer ₹100</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Recharge & Pay Bills</h3>
+        <div class="recharge-grid">
+          <div class="recharge-tile" onclick="openRecharge('mobile')">
+            <img src="https://cdn-icons-png.flaticon.com/512/1040/1040238.png"><span>Mobile</span>
+          </div>
+          <div class="recharge-tile" onclick="openRecharge('dth')">
+            <img src="https://cdn-icons-png.flaticon.com/512/1040/1040241.png"><span>DTH</span>
+          </div>
+          <div class="recharge-tile" onclick="openRecharge('electricity')">
+            <img src="https://cdn-icons-png.flaticon.com/512/2313/2313830.png"><span>Electricity</span>
+          </div>
+          <div class="recharge-tile" onclick="openRecharge('card')">
+            <img src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png"><span>Card Bills</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STORES -->
+    <div id="page-stores" class="page" style="display:none;padding:12px 16px;">
+      <h3 style="margin-bottom:8px">Nearby Stores</h3>
+      <p class="small" style="margin-bottom:12px">Tap scan to pay at merchant QR or pay directly from wallet.</p>
+      <ul class="small" style="margin-bottom:12px">
+        <li>SuperMart - Grocery</li>
+        <li>Petrol Pump - Scan & Pay</li>
+        <li>Domino's - Pay & Earn Cashback</li>
+      </ul>
+      <button class="btn primary" style="width:100%" onclick="alert('QR Scanner demo')">Scan & Pay</button>
+    </div>
+
+    <!-- INSURANCE -->
+    <div id="page-insurance" class="page" style="display:none;padding:12px 16px;">
+      <h3 style="margin-bottom:8px">Insurance</h3>
+      <p class="small" style="margin-bottom:12px">Get quotes, manage renewals, and check claim status.</p>
+      <ul class="small" style="margin-bottom:12px">
+        <li>Health Insurance</li>
+        <li>Vehicle Insurance</li>
+        <li>Life Insurance</li>
+        <li>Travel Insurance</li>
+      </ul>
+    </div>
+
+    <!-- WEALTH -->
+    <div id="page-wealth" class="page" style="display:none;padding:12px 16px;">
+      <h3 style="margin-bottom:8px">Wealth</h3>
+      <p class="small" style="margin-bottom:12px">Mutual funds, SIP tracker, and portfolio overview.</p>
+      <ul class="small" style="margin-bottom:12px">
+        <li>Mutual Funds</li>
+        <li>Gold Savings</li>
+        <li>Stock Market</li>
+        <li>SIP Tracker</li>
+      </ul>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="page-history" class="page" style="display:none;">
+      <div style="padding:12px 16px;">
+        <h3 style="margin-bottom:8px">Transaction History</h3>
+        <div id="historyList" class="history-list">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom nav -->
+  <div class="bottom-nav" role="navigation" aria-label="Main">
+    <div class="nav-item active" id="nav-home" onclick="showSection('home', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/25/25694.png" alt="home"><div>Home</div>
+    </div>
+    <div class="nav-item" id="nav-stores" onclick="showSection('stores', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/1077/1077042.png" alt="stores"><div>Stores</div>
+    </div>
+    <div class="nav-item" id="nav-insurance" onclick="showSection('insurance', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/929/929564.png" alt="ins"><div>Insurance</div>
+    </div>
+    <div class="nav-item" id="nav-wealth" onclick="showSection('wealth', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/685/685658.png" alt="wealth"><div>Wealth</div>
+    </div>
+    <div class="nav-item" id="nav-history" onclick="showSection('history', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/929/929564.png" alt="hist"><div>History</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal container -->
+<div id="modalRoot" style="display:none"></div>
+
+<!-- Success screen container -->
+<div id="successRoot" style="display:none"></div>
+
+<script>
+/* ------------ App state & utilities ------------ */
+const DEFAULT_BALANCE = 5000;
+const STORAGE_KEY = 'payease_balance_v3';
+const TX_KEY = 'payease_tx_v3';
+
+function getBalance(){
+  const v = localStorage.getItem(STORAGE_KEY);
+  return v !== null ? parseInt(v,10) : DEFAULT_BALANCE;
+}
+function setBalance(val){
+  localStorage.setItem(STORAGE_KEY, String(val));
+  updateBalanceUI();
+}
+function formatINR(n){ return '₹' + n.toLocaleString('en-IN'); }
+function genTxId(){
+  const s = Math.random().toString(36).substr(2,9).toUpperCase();
+  const t = Date.now().toString().slice(-4);
+  return 'TX' + s + t;
+}
+
+/* init */
+if(localStorage.getItem(STORAGE_KEY) === null){
+  localStorage.setItem(STORAGE_KEY, String(DEFAULT_BALANCE));
+}
+if(localStorage.getItem(TX_KEY) === null){
+  localStorage.setItem(TX_KEY, JSON.stringify([]));
+}
+updateBalanceUI();
+renderHistory();
+
+/* update balance UI */
+function updateBalanceUI(){
+  const el = document.getElementById('balanceValue');
+  const bal = getBalance();
+  el.textContent = formatINR(bal);
+}
+
+/* render history */
+function renderHistory(){
+  const listEl = document.getElementById('historyList');
+  const raw = JSON.parse(localStorage.getItem(TX_KEY) || '[]');
+  listEl.innerHTML = '';
+  if(raw.length === 0){
+    listEl.innerHTML = '<div class="small">No transactions yet.</div>';
+    return;
+  }
+  raw.slice().reverse().forEach(tx=>{
+    const div = document.createElement('div');
+    div.className = 'tx';
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<div style="font-weight:600">${tx.title}</div><div class="small">${tx.note || ''} • ${tx.date}</div>`;
+    const amt = document.createElement('div');
+    amt.className = 'amt';
+    amt.textContent = (tx.type === 'credit' ? '+' : '-') + formatINR(tx.amount);
+    if(tx.type === 'credit') amt.style.color = '#059669';
+    div.appendChild(meta);
+    div.appendChild(amt);
+    listEl.appendChild(div);
+  });
+}
+
+/* push tx */
+function pushTx(tx){
+  const current = JSON.parse(localStorage.getItem(TX_KEY) || '[]');
+  current.push(tx);
+  localStorage.setItem(TX_KEY, JSON.stringify(current));
+  renderHistory();
+}
+
+/* ---------- Navigation ---------- */
+function showSection(name, el){
+  const pages = ['home','stores','insurance','wealth','history'];
+  pages.forEach(p=>{
+    const dom = document.getElementById('page-' + p);
+    if(dom) dom.style.display = (p === name) ? 'block' : 'none';
+  });
+  const titles = {home:'Home',stores:'Stores',insurance:'Insurance',wealth:'Wealth',history:'History'};
+  document.getElementById('pageTitle').innerText = titles[name] || 'App';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+/* ---------- Basic actions ---------- */
+document.getElementById('copyUpiBtn').addEventListener('click', ()=>{
+  const upi = document.getElementById('upiId').innerText;
+  navigator.clipboard?.writeText(upi).then(()=>alert('UPI ID copied: ' + upi)).catch(()=>alert('Copied: ' + upi));
+});
+
+document.getElementById('addMoneyBtn').addEventListener('click', ()=>{
+  const current = getBalance();
+  const added = 1000;
+  const newBal = current + added;
+  setBalance(newBal);
+  pushTx({title:'Add Money', amount: added, type:'credit', date: new Date().toLocaleString(), note: 'Top-up via demo'});
+  // Show success screen for Add Money too
+  showSuccessScreen({
+    title: 'Money Added Successfully',
+    paidTo: 'Wallet Top-up',
+    amount: added,
+    deductedFrom: 'N/A (credit)',
+    txId: genTxId(),
+    note: 'Demo top-up'
+  });
+});
+
+/* ---------- Notifications / profile (simple) ---------- */
+function openNotifications(){
+  showAlertModal('Notifications', '<div class="small">• Cashback ₹50 added<br>• Electricity bill due tomorrow</div>');
+}
+function openProfile(){
+  showAlertModal('Profile', `<div class="small">Name: Manish<br>UPI: ${document.getElementById('upiId').innerText}</div>`);
+}
+
+/* ---------- Transfer modals ---------- */
+function openTransfer(mode){
+  let title = 'Transfer';
+  if(mode === 'mobile') title = 'Send to Mobile';
+  if(mode === 'bank') title = 'Send to Bank / UPI';
+  if(mode === 'self') title = 'Transfer to Self Account';
+
+  const content = document.createElement('div');
+  const form = document.createElement('div');
+  form.innerHTML = `
+    <div class="field"><label>Amount (INR)</label><input type="number" id="txAmount" min="1" step="1" placeholder="e.g. 500"></div>
+    ${mode === 'mobile' ? `<div class="field"><label>Mobile Number</label><input type="tel" id="txTo" placeholder="10 digit number"></div>` : ''}
+    ${mode === 'bank' ? `<div class="field"><label>UPI ID or Account</label><input type="text" id="txTo" placeholder="eg: name@bank or 1234567890"></div>` : ''}
+    ${mode === 'self' ? `<div class="field"><label>Select Bank</label><select id="txTo">
+        <option value="ICICI">ICICI Bank</option>
+        <option value="HDFC">HDFC Bank</option>
+        <option value="SBI">State Bank of India</option>
+      </select></div>` : ''}
+    <div class="field"><label>Note (optional)</label><input type="text" id="txNote" placeholder="For example: rent, gift"></div>
+    <div class="btn-row">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="confirmBtn">Send</button>
+    </div>
+  `;
+  content.appendChild(form);
+
+  showModal(title, content, ()=>{
+    document.getElementById('confirmBtn').addEventListener('click', ()=>{
+      const amtEl = document.getElementById('txAmount');
+      const toEl = document.getElementById('txTo');
+      const noteEl = document.getElementById('txNote');
+      const amount = Math.floor(Number(amtEl.value || 0));
+      const to = toEl ? toEl.value.trim() : '';
+      const note = noteEl ? noteEl.value.trim() : '';
+
+      if(!amount || amount <= 0){ alert('Enter a valid amount'); return; }
+      if(mode === 'mobile'){
+        if(!/^\d{10}$/.test(to)){ alert('Enter valid 10 digit mobile number'); return; }
+      } else if(mode === 'bank'){
+        if(!to){ alert('Enter UPI ID or account'); return; }
+      }
+      const cur = getBalance();
+      if(amount > cur){ alert('Insufficient balance. Please add money.'); return; }
+
+      setBalance(cur - amount);
+      const titleText = (mode==='mobile' ? `Mobile Transfer to ${to}` : mode==='bank' ? `UPI Transfer to ${to}` : `Transfer to ${to}`);
+      const txObj = {title: titleText, amount: amount, type:'debit', date: new Date().toLocaleString(), note: note || ''};
+      pushTx(txObj);
+      closeModal();
+
+      // show success screen
+      showSuccessScreen({
+        title: 'Payment Successful',
+        paidTo: (mode==='mobile' ? `Mobile: ${to}` : mode==='bank' ? to : (to || 'Self Account')),
+        amount: amount,
+        deductedFrom: 'Wallet',
+        txId: genTxId(),
+        note: note || ''
+      });
+    }, {once:true});
+  });
+}
+
+/* ---------- Check Balance modal ---------- */
+function openCheckBalance(){
+  const bal = getBalance();
+  showAlertModal('Current Balance', `<div style="font-size:20px;font-weight:700">${formatINR(bal)}</div><div class="small" style="margin-top:8px">This is demo balance stored locally.</div>`);
+}
+
+/* ---------- Recharge modal ---------- */
+function openRecharge(type){
+  const labels = {mobile:'Mobile Recharge', dth:'DTH Recharge', electricity:'Electricity Bill', card:'Card Payment'};
+  const title = labels[type] || 'Pay';
+  const content = document.createElement('div');
+  content.innerHTML = `
+    <div class="field"><label>Amount (INR)</label><input type="number" id="rchAmount" min="1" step="1" placeholder="e.g. 299"></div>
+    <div class="field"><label>${type==='card' ? 'Card Number' : (type==='electricity' ? 'Consumer Number' : (type==='dth' ? 'Subscriber ID' : 'Mobile Number'))}</label><input type="text" id="rchTo" placeholder=""></div>
+    <div class="field"><label>Operator (optional)</label><input type="text" id="rchOp" placeholder=""></div>
+    <div class="btn-row">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="payBtn">Pay</button>
+    </div>
+  `;
+  showModal(title, content, ()=>{
+    document.getElementById('payBtn').addEventListener('click', ()=>{
+      const amt = Math.floor(Number(document.getElementById('rchAmount').value || 0));
+      const to = document.getElementById('rchTo').value.trim();
+      const op = document.getElementById('rchOp').value.trim();
+      if(!amt || amt <= 0){ alert('Enter valid amount'); return; }
+      if(!to){ alert('Enter number or id'); return; }
+      const cur = getBalance();
+      if(amt > cur){ alert('Insufficient balance'); return; }
+      setBalance(cur - amt);
+      const txTitle = `${title} - ${to}`;
+      pushTx({title: txTitle, amount: amt, type:'debit', date: new Date().toLocaleString(), note: op || ''});
+      closeModal();
+
+      // show success screen
+      showSuccessScreen({
+        title: 'Bill Payment Successful',
+        paidTo: `${title} • ${to}`,
+        amount: amt,
+        deductedFrom: 'Wallet',
+        txId: genTxId(),
+        note: op || ''
+      });
+    }, {once:true});
+  });
+}
+
+/* ---------- Modal utilities ---------- */
+function showModal(title, contentNode, onOpen){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = '';
+  root.style.display = 'block';
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.onclick = (e)=>{ if(e.target === backdrop) closeModal(); };
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `<h4>${title}</h4>`;
+  modal.appendChild(contentNode);
+  backdrop.appendChild(modal);
+  root.appendChild(backdrop);
+  if(typeof onOpen === 'function') onOpen();
+}
+function closeModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = '';
+  root.style.display = 'none';
+}
+function showAlertModal(title, htmlContent){
+  const content = document.createElement('div');
+  content.innerHTML = htmlContent + `<div style="margin-top:12px;display:flex;gap:8px"><button class="btn ghost" onclick="closeModal()">Close</button></div>`;
+  showModal(title, content);
+}
+
+/* ---------- Success screen ---------- */
+function showSuccessScreen({title, paidTo, amount, deductedFrom, txId, note}){
+  const root = document.getElementById('successRoot');
+  root.innerHTML = '';
+  root.style.display = 'block';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'success-screen';
+  overlay.onclick = (e)=>{ if(e.target === overlay) closeSuccessScreen(); };
+
+  const panel = document.createElement('div');
+  panel.className = 'success-panel';
+
+  const head = document.createElement('div');
+  head.className = 'success-head';
+  head.innerHTML = `<div class="tick">✓</div><div style="font-weight:700;font-size:18px">${title}</div><div class="small" style="opacity:0.95;margin-top:6px">Your transaction will reflect in the bank/merchant within a few minutes.</div>`;
+
+  const body = document.createElement('div');
+  body.className = 'success-body';
+  body.innerHTML = `
+    <div class="success-row"><div class="label">Transaction ID</div><div class="value">${txId}</div></div>
+    <div class="success-row"><div class="label">Paid To</div><div class="value">${paidTo}</div></div>
+    <div class="success-row"><div class="label">Amount</div><div class="value">${formatINR(amount)}</div></div>
+    <div class="success-row"><div class="label">Deducted From</div><div class="value">${deductedFrom}</div></div>
+    <div style="padding:12px 0" class="success-note"><strong>Note:</strong> ${note || '—'}</div>
+  `;
+
+  const actions = document.createElement('div');
+  actions.className = 'success-actions';
+  actions.innerHTML = `<button class="btn ghost" onclick="shareReceipt('${txId}','${escapeHtml(paidTo)}',${amount})">Share</button><button class="btn primary" onclick="doneSuccess()">Done</button>`;
+
+  panel.appendChild(head);
+  panel.appendChild(body);
+  panel.appendChild(actions);
+  overlay.appendChild(panel);
+  root.appendChild(overlay);
+}
+
+/* helper to escape single quotes when injecting into onclick params */
+function escapeHtml(str){
+  return String(str).replaceAll("'", "\\'");
+}
+
+function closeSuccessScreen(){
+  const root = document.getElementById('successRoot');
+  root.innerHTML = '';
+  root.style.display = 'none';
+}
+
+/* when user clicks Done on success screen */
+function doneSuccess(){
+  closeSuccessScreen();
+  showSection('home');
+}
+
+/* share receipt simple (copy tx summary) */
+function shareReceipt(txId, paidTo, amount){
+  const txt = `Payment Success\nTX: ${txId}\nTo: ${paidTo}\nAmount: ${formatINR(amount)}`;
+  navigator.clipboard?.writeText(txt).then(()=>alert('Receipt copied. Share it anywhere.')).catch(()=>alert(txt));
+}
+
+/* ---------- Extra quick actions ---------- */
+function showWallet(){
+  const bal = getBalance();
+  showAlertModal('Wallet', `<div style="font-size:18px;font-weight:700">${formatINR(bal)}</div><div class="small" style="margin-top:8px">Use Add Money to top up balance.</div>`);
+}
+function openRewards(){ showAlertModal('Rewards', '<div class="small">You have ₹150 rewards available. Redeem at checkout.</div>'); }
+function openRefer(){ showAlertModal('Refer & Earn', `<div class="small">Your code: MANISH123<br>Share to earn ₹100 when friend signs up.</div>`); }
+
+/* initial nav and render */
+showSection('home');
+renderHistory();
+
+</script>
+</body>
+</html>
